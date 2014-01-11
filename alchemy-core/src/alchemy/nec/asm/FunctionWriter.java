@@ -19,7 +19,7 @@
 package alchemy.nec.asm;
 
 import alchemy.evm.Opcodes;
-import alchemy.nec.tree.Null;
+import alchemy.nec.syntax.Null;
 import alchemy.types.Float32;
 import alchemy.types.Float64;
 import alchemy.types.Int32;
@@ -233,11 +233,15 @@ public class FunctionWriter implements Opcodes {
 		data.write(var);
 		data.write(incr);
 	}
-	
+
+	public void visitLdFunc(String name) {
+		visitLdcInsn(new FuncObject(name));
+	}
+
 	/** Visit LDC instruction with given object.
 	 * The class of argument must be one of Null,
 	 * Boolean, Int32, Int64, Float32, Float64,
-	 * String, FuncObject.
+	 * String.
 	 */
 	public void visitLdcInsn(Object cnst) {
 		boolean written = false;

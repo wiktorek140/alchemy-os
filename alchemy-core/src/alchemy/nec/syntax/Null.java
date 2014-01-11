@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,34 +16,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.nec.asm;
+package alchemy.nec.syntax;
 
-class FuncObject {
-	final String value;
+/**
+ * Object instance to represent null value.
+ * @author Sergey Basalaev
+ */
+public final class Null {
+	
+	private Null() { }
+	
+	public final static Null NULL = new Null();
 
-	public FuncObject(String value) {
-		this.value = value;
-	}
-
-	public boolean equals(Object obj) {
-		if (obj instanceof FuncObject) {
-			return ((FuncObject)obj).value.equals(value);
-		}
-		return false;
-	}
-}
-
-/* Assembler function. */
-class AsmFunc extends FuncObject {
-	boolean shared;
-	int stacksize;
-	int varcount;
-	byte[] code;
-	char[] relocs;
-	char[] dbgtable;
-	char[] errtable;
-
-	public AsmFunc(String value) {
-		super(value);
+	public String toString() {
+		return "null";
 	}
 }

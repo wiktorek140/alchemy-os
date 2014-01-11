@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,34 +16,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.nec.asm;
+package alchemy.nec.syntax.expr;
 
-class FuncObject {
-	final String value;
+import alchemy.nec.syntax.type.BuiltinType;
+import alchemy.nec.syntax.type.Type;
+import alchemy.util.ArrayList;
 
-	public FuncObject(String value) {
-		this.value = value;
+/**
+ * String concatenation expression.
+ * @author Sergey Basalaev
+ */
+public final class ConcatExpr extends Expr {
+
+	public ArrayList exprs = new ArrayList();
+
+	public ConcatExpr() {
+		super(EXPR_CONCAT);
 	}
 
-	public boolean equals(Object obj) {
-		if (obj instanceof FuncObject) {
-			return ((FuncObject)obj).value.equals(value);
-		}
-		return false;
+	public int lineNumber() {
+		return ((Expr)exprs.first()).lineNumber();
 	}
-}
 
-/* Assembler function. */
-class AsmFunc extends FuncObject {
-	boolean shared;
-	int stacksize;
-	int varcount;
-	byte[] code;
-	char[] relocs;
-	char[] dbgtable;
-	char[] errtable;
+	public Type returnType() {
+		return BuiltinType.STRING;
+	}
 
-	public AsmFunc(String value) {
-		super(value);
+	public Object accept(ExprVisitor v, Object args) {
+		return v.visitConcat(this, args);
 	}
 }

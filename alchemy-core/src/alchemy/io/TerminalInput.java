@@ -16,34 +16,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.nec.asm;
+package alchemy.io;
 
-class FuncObject {
-	final String value;
-
-	public FuncObject(String value) {
-		this.value = value;
-	}
-
-	public boolean equals(Object obj) {
-		if (obj instanceof FuncObject) {
-			return ((FuncObject)obj).value.equals(value);
-		}
-		return false;
-	}
-}
-
-/* Assembler function. */
-class AsmFunc extends FuncObject {
-	boolean shared;
-	int stacksize;
-	int varcount;
-	byte[] code;
-	char[] relocs;
-	char[] dbgtable;
-	char[] errtable;
-
-	public AsmFunc(String value) {
-		super(value);
-	}
+/**
+ * Input from platform terminal.
+ * @author Sergey Basalaev
+ */
+public interface TerminalInput {
+	/** Clears terminal screen. */
+	void clear();
+	/** Returns current prompt of the terminal input. */
+	String getPrompt();
+	/** Sets new prompt for the terminal input. */
+	void setPrompt(String prompt);
 }

@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,34 +16,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.nec.asm;
+package alchemy.nec.syntax.type;
 
-class FuncObject {
-	final String value;
+/**
+ * Array type.
+ * <pre>
+ * [<i>elementType</i>]
+ * </pre>
+ * 
+ * @author Sergey Basalaev.
+ */
+public final class ArrayType extends Type {
 
-	public FuncObject(String value) {
-		this.value = value;
+	public final Type elementType;
+
+	public ArrayType(Type elementType) {
+		super("Array", TYPE_ARRAY);
+		this.elementType = elementType;
 	}
 
-	public boolean equals(Object obj) {
-		if (obj instanceof FuncObject) {
-			return ((FuncObject)obj).value.equals(value);
-		}
-		return false;
+	public boolean equals(Type type) {
+		if (type.kind != TYPE_ARRAY) return false;
+		final ArrayType other = (ArrayType)type;
+		return this.elementType.equals(other.elementType);
 	}
-}
 
-/* Assembler function. */
-class AsmFunc extends FuncObject {
-	boolean shared;
-	int stacksize;
-	int varcount;
-	byte[] code;
-	char[] relocs;
-	char[] dbgtable;
-	char[] errtable;
+	public String toString() {
+		return "["+elementType+"]";
+	}
 
-	public AsmFunc(String value) {
-		super(value);
+	public Type superType() {
+		return BuiltinType.ARRAY;
 	}
 }

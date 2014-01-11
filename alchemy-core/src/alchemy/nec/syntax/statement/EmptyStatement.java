@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,34 +16,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.nec.asm;
+package alchemy.nec.syntax.statement;
 
-class FuncObject {
-	final String value;
+/**
+ * Statement with no action.
+ * <pre>;</pre>
+ * @author Sergey Basalaev
+ */
+public final class EmptyStatement extends Statement {
 
-	public FuncObject(String value) {
-		this.value = value;
+	public EmptyStatement() {
+		super(STAT_EMPTY);
 	}
 
-	public boolean equals(Object obj) {
-		if (obj instanceof FuncObject) {
-			return ((FuncObject)obj).value.equals(value);
-		}
-		return false;
+	public int lineNumber() {
+		return -1;
 	}
-}
 
-/* Assembler function. */
-class AsmFunc extends FuncObject {
-	boolean shared;
-	int stacksize;
-	int varcount;
-	byte[] code;
-	char[] relocs;
-	char[] dbgtable;
-	char[] errtable;
-
-	public AsmFunc(String value) {
-		super(value);
+	public Object accept(StatementVisitor v, Object args) {
+		return v.visitEmptyStatement(this, args);
 	}
 }

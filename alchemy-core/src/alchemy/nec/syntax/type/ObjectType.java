@@ -16,34 +16,39 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.nec.asm;
+package alchemy.nec.syntax.type;
 
-class FuncObject {
-	final String value;
+import alchemy.nec.syntax.Var;
 
-	public FuncObject(String value) {
-		this.value = value;
+/**
+ * Object type.
+ * <pre>
+ * <b>type</b> <i>Name</i> &lt; <i>Supertype</i> {
+ *   field1: type1,
+ *   field2: type2 = defaultValue,
+ *   ...
+ *   fieldN: typeN
+ * }
+ * </pre>
+ * 
+ * @author Sergey Basalaev
+ */
+public final class ObjectType extends Type {
+
+	public final Var[] fields;
+	public final ObjectType parent;
+
+	public ObjectType(String name, ObjectType parent, Var[] fields) {
+		super(name, TYPE_OBJECT);
+		this.parent = parent;
+		this.fields = fields;
 	}
 
-	public boolean equals(Object obj) {
-		if (obj instanceof FuncObject) {
-			return ((FuncObject)obj).value.equals(value);
-		}
-		return false;
+	public boolean equals(Type other) {
+		return this.name.equals(other.name);
 	}
-}
 
-/* Assembler function. */
-class AsmFunc extends FuncObject {
-	boolean shared;
-	int stacksize;
-	int varcount;
-	byte[] code;
-	char[] relocs;
-	char[] dbgtable;
-	char[] errtable;
-
-	public AsmFunc(String value) {
-		super(value);
+	public Type superType() {
+		return (this.parent != null) ? (Type)this.parent : (Type)BuiltinType.ANY;
 	}
 }
