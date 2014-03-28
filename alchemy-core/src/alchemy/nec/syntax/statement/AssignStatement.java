@@ -24,23 +24,23 @@ import alchemy.nec.syntax.expr.Expr;
 /**
  * Assignment to a variable.
  * <pre>
- * <i>varname</i> = <i>expr</i>
+ * <i>var</i> = <i>assignExpr</i>
  * </pre>
  * @author Sergey Basalaev
  */
 public final class AssignStatement extends Statement {
 
-	public final Var var;
-	public Expr expr;
+	public Var var;
+	public Expr assignExpr;
 
-	public AssignStatement(Var var, Expr expr) {
+	public AssignStatement(Var var, Expr assignExpr) {
 		super(STAT_ASSIGN);
 		this.var = var;
-		this.expr = expr;
+		this.assignExpr = assignExpr;
 	}
 
 	public int lineNumber() {
-		return expr.lineNumber();
+		return assignExpr.lineNumber();
 	}
 
 	public Object accept(StatementVisitor v, Object args) {

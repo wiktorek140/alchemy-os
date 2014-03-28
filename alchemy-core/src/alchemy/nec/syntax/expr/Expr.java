@@ -25,16 +25,25 @@ import alchemy.nec.syntax.type.Type;
  */
 public abstract class Expr {
 	public static final int EXPR_CONST = 0;
-	public static final int EXPR_BINARY = 1;
-	public static final int EXPR_CALL = 2;
-	public static final int EXPR_CAST = 3;
-	public static final int EXPR_COMPARISON = 4;
-	public static final int EXPR_CONCAT = 5;
-	public static final int EXPR_IF = 6;
-	public static final int EXPR_UNARY = 7;
-	public static final int EXPR_VAR = 8;
-	public static final int EXPR_ARRAY_GET = 9;
-	public static final int EXPR_ARRAY_LEN = 10;
+	public static final int EXPR_APPLY = 1;
+	public static final int EXPR_ARRAY_ELEMENT = 2;
+	public static final int EXPR_ARRAY_LEN = 3;
+	public static final int EXPR_ARRAYLIKE = 4;
+	public static final int EXPR_BINARY = 5;
+	public static final int EXPR_CALL = 6;
+	public static final int EXPR_CAST = 7;
+	public static final int EXPR_COMPARISON = 8;
+	public static final int EXPR_CONCAT = 9;
+	public static final int EXPR_RANGE = 10;
+	public static final int EXPR_IF = 11;
+	public static final int EXPR_NEWARRAY = 12;
+	public static final int EXPR_NEWARRAY_INIT = 13;
+	public static final int EXPR_PROPERTY = 14;
+	public static final int EXPR_SEQUENTIAL = 15;
+	public static final int EXPR_SWITCH = 16;
+	public static final int EXPR_TRYCATCH = 17;
+	public static final int EXPR_UNARY = 18;
+	public static final int EXPR_VAR = 19;
 
 	/** Kind of this expression, one of EXPR_* constants. */
 	public final int kind;

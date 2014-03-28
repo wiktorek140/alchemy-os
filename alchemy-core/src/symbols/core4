@@ -1,6 +1,7 @@
 acopy
-Function.curry
-Structure.clone
+Function.apply
+throw
+Any.hash
 Any.tostr
 Char.tostr
 Int.tobin
@@ -27,9 +28,8 @@ String.split
 String.format
 String.chars
 String.utfbytes
-String.startswith
+String.startsWith
 String.replace
-String.hash
 ca2str
 ba2utf
 Error.code
@@ -37,6 +37,8 @@ Error.msg
 Error.traceLen
 Error.traceName
 Error.traceDbg
+Error.trace
+errstring
 abs
 sin
 cos
@@ -205,3 +207,16 @@ getenv
 setenv
 sleep
 sysProperty
+platformRequest
+isTerm
+TermIStream.clear
+TermIStream.getPrompt
+TermIStream.setPrompt
+[Byte].sort
+[Char].sort
+[Short].sort
+[Int].sort
+[Long].sort
+[Float].sort
+[Double].sort
+[Any].sort

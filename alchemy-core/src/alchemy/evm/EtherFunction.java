@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,14 +27,17 @@ import alchemy.types.Float32;
 import alchemy.types.Float64;
 import alchemy.types.Int32;
 import alchemy.types.Int64;
+import alchemy.util.Arrays;
+import alchemy.util.Strings;
 
 /**
  * Ether Virtual Machine.
+ * TODO: switch to the register based machine already.
+ *
  * @author Sergey Basalaev
  */
 final class EtherFunction extends Function {
 
-	private final Library owner;
 	private final int stacksize;
 	private final int localsize;
 	private final byte[] bcode;
@@ -43,8 +46,7 @@ final class EtherFunction extends Function {
 	private final Object[] cpool;
 
 	EtherFunction(Library owner, String funcname, Object[] cpool, int stacksize, int localsize, byte[] code, char[] dbgtable, char[] errtable) {
-		super(funcname);
-		this.owner = owner;
+		super(owner, funcname);
 		this.stacksize = stacksize;
 		this.localsize = localsize;
 		this.bcode = code;
@@ -453,17 +455,17 @@ final class EtherFunction extends Function {
 			
 			//GLOBALS LOADERS AND SAVERS
 				case Opcodes.GETGLOBAL: {
-					stack[head] = p.getGlobal(owner, (String)stack[head], null);
+					stack[head] = p.getGlobal(library, (String)stack[head], null);
 					break;
 				}
 				case Opcodes.GETGLOBALDEF: {
 					head--;
-					stack[head] = p.getGlobal(owner, (String)stack[head], stack[head+1]);
+					stack[head] = p.getGlobal(library, (String)stack[head], stack[head+1]);
 					break;
 				}
 				case Opcodes.SETGLOBAL: {
-					p.setGlobal(owner, (String)stack[head-1], stack[head]);
-					head--;
+					p.setGlobal(library, (String)stack[head-1], stack[head]);
+					head -= 2;
 					break;
 				}
 
@@ -585,6 +587,7 @@ final class EtherFunction extends Function {
 					head--;
 					break;
 				}
+
 			//FUNCTION CALLS
 				case Opcodes.CALL_0:
 				case Opcodes.CALL_1:
@@ -610,6 +613,32 @@ final class EtherFunction extends Function {
 					if ((instr & 8) != 0) head--;
 					break;
 				}
+				case Opcodes.CALLC_0:
+				case Opcodes.CALLC_1:
+				case Opcodes.CALLC_2:
+				case Opcodes.CALLC_3:
+				case Opcodes.CALLC_4:
+				case Opcodes.CALLC_5:
+				case Opcodes.CALLC_6:
+				case Opcodes.CALLC_7:
+				case Opcodes.CALVC_0:
+				case Opcodes.CALVC_1:
+				case Opcodes.CALVC_2:
+				case Opcodes.CALVC_3:
+				case Opcodes.CALVC_4:
+				case Opcodes.CALVC_5:
+				case Opcodes.CALVC_6:
+				case Opcodes.CALVC_7: { // cal?c_? <ushort>
+					int paramlen = instr & 7;
+					Object[] params = new Object[paramlen];
+					head -= paramlen-1;
+					System.arraycopy(stack, head, params, 0, paramlen);
+					Function f = (Function) cpool[((code[ct] & 0xff) << 8) | (code[ct+1] & 0xff)];
+					ct += 2;
+					stack[head] = f.invoke(p, params);
+					if ((instr & 8) != 0) head--;
+					break;
+				}
 				case Opcodes.CALL: {//call <ubyte>
 					int paramlen = code[ct] & 0xff;
 					ct++;
@@ -626,6 +655,29 @@ final class EtherFunction extends Function {
 					head -= paramlen;
 					System.arraycopy(stack, head+1, params, 0, paramlen);
 					((Function)stack[head]).invoke(p, params);
+					head--;
+					break;
+				}
+				case Opcodes.CALLC: {// callc <ubyte> <ushort>
+					int paramlen = code[ct] & 0xff;
+					ct++;
+					Object[] params = new Object[paramlen];
+					head -= paramlen-1;
+					System.arraycopy(stack, head, params, 0, paramlen);
+					Function f = (Function) cpool[((code[ct] & 0xff) << 8) | (code[ct+1] & 0xff)];
+					ct += 2;
+					stack[head] = f.invoke(p, params);
+					break;
+				}
+				case Opcodes.CALVC: {// calvc <ubyte> <ushort>
+					int paramlen = code[ct] & 0xff;
+					ct++;
+					Object[] params = new Object[paramlen];
+					head -= paramlen-1;
+					System.arraycopy(stack, head, params, 0, paramlen);
+					Function f = (Function) cpool[((code[ct] & 0xff) << 8) | (code[ct+1] & 0xff)];
+					ct += 2;
+					stack[head] = f.invoke(p, params);
 					head--;
 					break;
 				}
@@ -821,6 +873,20 @@ final class EtherFunction extends Function {
 					stack[head] = Int32.toInt32(((double[])stack[head]).length);
 					break;
 				}
+				case Opcodes.NEWMULTIARRAY: {
+					int dimension = code[ct] & 0xff;
+					ct++;
+					if (dimension < 2) throw new IllegalArgumentException();
+					int[] sizes = new int[dimension];
+					head -= dimension-1;
+					for (int i=0; i<dimension; i++) {
+						sizes[i] = ((Int32)stack[head+i]).value;
+					}
+					int type = code[ct];
+					ct++;
+					stack[head] = Arrays.newMultiArray(sizes, type);
+					break;
+				}
 
 			//SWITCH BRANCHING
 				case Opcodes.TABLESWITCH: {
@@ -871,6 +937,17 @@ final class EtherFunction extends Function {
 					break;
 				}
 			//OTHERS
+				case Opcodes.CONCAT: { // concat <ubyte>
+					int n = code[ct] & 0xff;
+					ct++;
+					head -= n-1;
+					StringBuffer sb = new StringBuffer();
+					for (int i = 0; i < n; i++) {
+						sb.append(Strings.toString(stack[head+i]));
+					}
+					stack[head] = sb.toString();
+					break;
+				}
 				case Opcodes.ACMP: {
 					head--;
 					boolean eq = (stack[head] == null) ? stack[head+1] == null : stack[head].equals(stack[head+1]);

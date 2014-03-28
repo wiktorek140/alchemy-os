@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2013-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ public final class Arrays {
 	public static final int AR_FLOAT = 'F';
 	/** Constant for array type switches. */
 	public static final int AR_DOUBLE = 'D';
-	
+
 	/**
 	 * Copies portion of one array into another.
 	 * This method handles the cases when one of arrays
@@ -284,24 +284,200 @@ public final class Arrays {
 		}
 	}
 
-	/** Performs quick sort of array in the given range using given implementation. */
-	public static void qsort(Object[] a, int low, int high, Process p, Function f)
+	/** Returns new multidimensional array. */
+	public static Object newMultiArray(int[] sizes, int type) {
+		if (sizes.length == 0) throw new IllegalArgumentException();
+		return newMultiArray(sizes, type, 0);
+	}
+
+	private static Object newMultiArray(int[] sizes, int type, int level) {
+		if (level == sizes.length-1) {
+			switch (type) {
+				case AR_OBJECT:  return new Object[sizes[level]];
+				case AR_BOOLEAN: return new boolean[sizes[level]];
+				case AR_BYTE:    return new byte[sizes[level]];
+				case AR_CHAR:    return new char[sizes[level]];
+				case AR_SHORT:   return new short[sizes[level]];
+				case AR_INT:     return new int[sizes[level]];
+				case AR_LONG:    return new long[sizes[level]];
+				case AR_FLOAT:   return new float[sizes[level]];
+				case AR_DOUBLE:  return new double[sizes[level]];
+				default: throw new IllegalArgumentException();
+			}
+		} else {
+			Object[] array = new Object[sizes[level]];
+			for (int i=0; i<sizes[level]; i++) {
+				array[i] = newMultiArray(sizes, type, level+1);
+			}
+			return array;
+		}
+	}
+
+	/** Performs quick sort of array in given range using given implementation. */
+	public static void qsort(Object[] array, int low, int high, Process p, Function f)
 	throws AlchemyException, ProcessKilledException {
+		if (low >= high) return;
 		int i = low;
 		int j = high;
-		Object x = a[(low+high)/2];
+		Object x = array[(low+high)/2];
 		while(i <= j) {
-			while(((Int32)f.invoke(p, new Object[] {a[i],x})).value < 0) i++;
-			while(((Int32)f.invoke(p, new Object[] {a[j],x})).value > 0) j--;
+			while(((Int32)f.invoke(p, new Object[] {array[i],x})).value < 0) i++;
+			while(((Int32)f.invoke(p, new Object[] {array[j],x})).value > 0) j--;
 			if (i <= j) {
-				Object tmp = a[i];
-				a[i] = a[j];
-				a[j] = tmp;
+				Object tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
 				i++;
 				j--;
 			}
 		}
-		if (low < j)  qsort(a, low, j, p, f);
-		if (i < high) qsort(a, i, high, p, f);
+		if (low < j)  qsort(array, low, j, p, f);
+		if (i < high) qsort(array, i, high, p, f);
+	}
+
+	/** Performs quick sort of array in given range. */
+	public static void qsort(byte[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		byte x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				byte tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
+	}
+
+	/** Performs quick sort of array in given range. */
+	public static void qsort(short[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		short x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				short tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
+	}
+
+	/** Performs quick sort of array in given range. */
+	public static void qsort(char[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		char x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				char tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
+	}
+	/** Performs quick sort of array in given range. */
+	public static void qsort(int[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		int x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				int tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
+	}
+
+	/** Performs quick sort of array in given range. */
+	public static void qsort(long[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		long x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				long tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
+	}
+
+	/** Performs quick sort of array in given range. */
+	public static void qsort(float[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		float x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				float tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
+	}
+
+	/** Performs quick sort of array in given range. */
+	public static void qsort(double[] array, int low, int high) {
+		if (low >= high) return;
+		int i = low;
+		int j = high;
+		double x = array[(low+high)/2];
+		while(i <= j) {
+			while(array[i] < x) i++;
+			while(array[j] > x) j--;
+			if (i <= j) {
+				double tmp = array[i];
+				array[i] = array[j];
+				array[j] = tmp;
+				i++;
+				j--;
+			}
+		}
+		if (low < j)  qsort(array, low, j);
+		if (i < high) qsort(array, i, high);
 	}
 }

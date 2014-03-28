@@ -19,6 +19,7 @@
 package alchemy.nec.syntax;
 
 import alchemy.nec.syntax.type.Type;
+import alchemy.util.ArrayList;
 import alchemy.util.HashMap;
 
 /**
@@ -32,6 +33,8 @@ public final class Unit implements Scope {
 	/** String -&gt; Type */
 	private final HashMap types = new HashMap();
 
+	public final ArrayList implementedFunctions = new ArrayList();
+
 	public Function getFunction(String name) {
 		Var v = getVar(name);
 		if (v != null && v.isConstant && v.type.kind == Type.TYPE_FUNCTION)
@@ -44,8 +47,9 @@ public final class Unit implements Scope {
 		return v;
 	}
 
-	public void addVar(Var v) {
+	public boolean addVar(Var v) {
 		vars.set(v.name, v);
+		return false;
 	}
 
 	public Type getType(String name) {
@@ -54,5 +58,9 @@ public final class Unit implements Scope {
 
 	public void addType(Type type) {
 		types.set(type.name, type);
+	}
+
+	public Function enclosingFunction() {
+		return null;
 	}
 }

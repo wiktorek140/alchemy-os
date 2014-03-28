@@ -309,7 +309,7 @@ public final class Process {
 					System.arraycopy(intargs, 1, intargs, 0, intargs.length-1);
 					intargs[intargs.length-1] = libfile;
 					lib = new Library();
-					lib.putFunction(new InterpreterMain(intcmd, intargs));
+					lib.putFunction(new InterpreterMain(lib, intcmd, intargs));
 					break;
 				}
 				case MAGIC_ETHER:
@@ -422,9 +422,10 @@ public final class Process {
 	 */
 	public Object getGlobal(Library lib, String name, Object dflt) {
 		if (globals == null) return dflt;
-		Object ret = ((HashMap)globals.get(lib)).get(name);
-		if (ret == null) return dflt;
-		return ret;
+		HashMap libKeys = (HashMap)globals.get(lib);
+		if (libKeys == null) return dflt;
+		Object ret = libKeys.get(name);
+		return (ret != null) ? ret : dflt;
 	}
 
 	/**
@@ -546,6 +547,9 @@ public final class Process {
 				((Connection)connections.get(i)).close();
 			} catch (IOException ioe) { }
 		}
+		for (int i=listeners.size()-1; i >= 0; i--) {
+			((ProcessListener)listeners.get(i)).processEnded(this);
+		}
 	}
 
 	/** Main function of the interpreter script. */
@@ -553,8 +557,8 @@ public final class Process {
 		private final String intcmd;
 		private final String[] intargs;
 
-		public InterpreterMain(String command, String[] args) {
-			super("main");
+		public InterpreterMain(Library owner, String command, String[] args) {
+			super(owner, "main");
 			this.intcmd = command;
 			this.intargs = args;
 		}

@@ -1,8 +1,8 @@
 /* COMM connections. */
 
-use "connection.eh"
+use "io.eh"
 
-type Comm < StreamConnection;
+type Comm < StreamConnection
 
 type CommCfg {
  baudrate: Int,
@@ -14,8 +14,8 @@ type CommCfg {
  autorts: Bool = true
 }
 
-def listCommPorts(): [String];
+def listCommPorts(): [String]
 
-def Comm.new(port: String, cfg: CommCfg): Comm;
-def Comm.getBaudRate(): Int;
-def Comm.setBaudRate(baudrate: Int);
+def Comm.new(port: String, cfg: CommCfg)
+def Comm.getBaudRate(): Int
+def Comm.setBaudRate(baudrate: Int)

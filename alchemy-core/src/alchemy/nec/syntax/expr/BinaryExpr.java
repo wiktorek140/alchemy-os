@@ -22,11 +22,12 @@ import alchemy.nec.syntax.type.Type;
 
 /**
  * Expression with binary operator.
- * <pre><i>expr</i> + <i>expr</i></pre>
+ * <pre>lhs + rhs</pre>
  * Valid binary operators are <code>+</code>,
  * <code>-</code>, <code>*</code>, <code>/</code>,
  * <code>%</code>, <code>&amp;</code>, <code>|</code>,
- * <code>^</code>, <code>TT_LTLT</code>, <code>TT_GTGT</code>.
+ * <code>^</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code>,
+ * <code>&gt;&gt;&gt;</code>.
  *
  * @author Sergey Basalaev
  */

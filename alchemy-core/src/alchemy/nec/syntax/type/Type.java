@@ -36,6 +36,8 @@ public abstract class Type {
 	public static final int TYPE_OBJECT = 9;
 	public static final int TYPE_FUNCTION = 10;
 	public static final int TYPE_ARRAY = 11;
+	public static final int TYPE_INTRANGE = 12;
+	public static final int TYPE_LONGRANGE = 13;
 
 	/** Kind of this type, one of TYPE_* constants. */
 	public final int kind;
@@ -74,7 +76,7 @@ public abstract class Type {
 			for (int i=self.argtypes.length-1; i>=0; i--) {
 				if (!func.argtypes[i].safeToCastTo(self.argtypes[i])) return false;
 			}
-			return self.rettype.safeToCastTo(func.rettype);
+			return self.returnType.safeToCastTo(func.returnType);
 		} else if (kind == TYPE_OBJECT && other.kind == TYPE_OBJECT) {
 			Type self = this;
 			if (self == BuiltinType.NULL) return true;
@@ -93,7 +95,7 @@ public abstract class Type {
 		while (t2 != null && !t1.safeToCastTo(t2)) {
 			t2 = t2.superType();
 		}
-		return t2;
+		return (t2 != null) ? t2 : BuiltinType.ANY;
 	}
 
 	public final boolean isNumeric() {

@@ -18,12 +18,13 @@
 
 package alchemy.nec.syntax.expr;
 
+import alchemy.nec.syntax.Function;
 import alchemy.nec.syntax.type.FunctionType;
 import alchemy.nec.syntax.type.Type;
 
 /**
  * Function invocation.
- * <pre><i>func</i>(<i>arg0</i>, ..., <i>argN</i>)</pre>
+ * <pre>fload(args[0], ..., args[N])</pre>
  * 
  * @author Sergey Basalaev
  */
@@ -40,12 +41,16 @@ public final class CallExpr extends Expr {
 		this.args = args;
 	}
 
+	public CallExpr(int line, Function func, Expr[] args) {
+		this(new ConstExpr(line, func.type, func), args);
+	}
+
 	public int lineNumber() {
 		return fload.lineNumber();
 	}
 
 	public Type returnType() {
-		return ((FunctionType)fload.returnType()).rettype;
+		return ((FunctionType)fload.returnType()).returnType;
 	}
 
 	public Object accept(ExprVisitor v, Object args) {

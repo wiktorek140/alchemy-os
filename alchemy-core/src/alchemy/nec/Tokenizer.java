@@ -28,6 +28,7 @@ import java.io.IOException;
 class Tokenizer {
 	static private final int EOF_CHAR = -1;
 	static private final int NO_CHAR = -2;
+	static private final int RANGE_CHAR = -3;
 
 	private final UTFReader r;
 	private final String filename;
@@ -96,11 +97,16 @@ class Tokenizer {
 		int ch = readChar();
 
 		//skipping whitespaces
-		while (ch <= ' ' && ch != EOF_CHAR) ch = readChar();
+		while (ch >= 0 && ch <= ' ') ch = readChar();
 
 		//EOF
 		if (ch == EOF_CHAR) {
 			return ttype = Token.EOF;
+		}
+
+		//range hack
+		if (ch == RANGE_CHAR) {
+			return ttype = Token.RANGE;
 		}
 
 		//character literal
@@ -197,12 +203,17 @@ class Tokenizer {
 			if (!dotseen) {
 				ch = readChar();
 				if (ch == '.') {
-					number.append('.');
-					nextch = ch = readChar();
-					if (ch >= '0' && ch <= '9') {
-						number.append(readDecimal());
+					ch = readChar();
+					if (ch == '.') {
+						nextch = RANGE_CHAR;
+					} else {
+						dotseen = true;
+						number.append('.');
+						nextch = ch;
+						if (ch >= '0' && ch <= '9') {
+							number.append(readDecimal());
+						}
 					}
-					dotseen = true;
 				} else {
 					nextch = ch;
 				}
@@ -284,73 +295,112 @@ class Tokenizer {
 			nextch = ch;
 			String id = idbuf.toString();
 			svalue = id;
-			if (id.equals("break"))
-				if (env.hasOption(CompilerEnv.F_COMPAT21)) {
-					env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'break' will be a keyword in Ether 2.2");
-					return ttype = Token.WORD;
-				} else {
-					return ttype = Token.BREAK;
-				}
-			if (id.equals("cast"))
-				return ttype = Token.CAST;
-			if (id.equals("catch"))
-				return ttype = Token.CATCH;
-			if (id.equals("const"))
-				return ttype = Token.CONST;
-			if (id.equals("continue"))
-				if (env.hasOption(CompilerEnv.F_COMPAT21)) {
-					env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'continue' will be a keyword in Ether 2.2");
-					return ttype = Token.WORD;
-				} else {
-					return ttype = Token.CONTINUE;
-				}
-			if (id.equals("def"))
-				return ttype = Token.DEF;
-			if (id.equals("do"))
-				return ttype = Token.DO;
-			if (id.equals("else"))
-				return ttype = Token.ELSE;
-			if (id.equals("false"))
-				return ttype = Token.FALSE;
-			if (id.equals("for"))
-				return ttype = Token.FOR;
-			if (id.equals("if"))
-				return ttype = Token.IF;
-			if (id.equals("in"))
-				if (env.hasOption(CompilerEnv.F_COMPAT21)) {
-					env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'in' will be a keyword in Ether 2.2");
-					return ttype = Token.WORD;
-				} else {
-					return ttype = Token.IN;
-				}
-			if (id.equals("new"))
-				return ttype = Token.NEW;
-			if (id.equals("null"))
-				return ttype = Token.NULL;
-			if (id.equals("return"))
-				if (env.hasOption(CompilerEnv.F_COMPAT21)) {
-					env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'return' will be a keyword in Ether 2.2");
-					return ttype = Token.WORD;
-				} else {
-					return ttype = Token.RETURN;
-				}
-			if (id.equals("super"))
-				return ttype = Token.SUPER;
-			if (id.equals("switch"))
-				return ttype = Token.SWITCH;
-			if (id.equals("true"))
-				return ttype = Token.TRUE;
-			if (id.equals("try"))
-				return ttype = Token.TRY;
-			if (id.equals("type"))
-				return ttype = Token.TYPE;
-			if (id.equals("use"))
-				return ttype = Token.USE;
-			if (id.equals("var"))
-				return ttype = Token.VAR;
-			if (id.equals("while"))
-				return ttype = Token.WHILE;
-			return ttype = Token.WORD;
+			int type = Token.WORD;
+			switch (id.hashCode()) {
+				case 0x059a58ff:
+					if (id.equals("break")) {
+						if (env.hasOption(CompilerEnv.F_COMPAT21)) {
+							env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'break' will be a keyword in Ether 2.2");
+						} else {
+							type = Token.BREAK;
+						}
+					}
+					break;
+				case 0x002e7b3f:
+					if (id.equals("cast")) type = Token.CAST;
+					break;
+				case 0x05a0eebb:
+					if (id.equals("catch")) type = Token.CATCH;
+					break;
+				case 0x05a73763:
+					if (id.equals("const")) type = Token.CONST;
+					break;
+				case 0xde312ca7:
+					if (id.equals("continue")) {
+						if (env.hasOption(CompilerEnv.F_COMPAT21)) {
+							env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'continue' will be a keyword in Ether 2.2");
+						} else {
+							type = Token.CONTINUE;
+						}
+					}
+					break;
+				case 0x00018405:
+					if (id.equals("def")) type = Token.DEF;
+					break;
+				case 0x00000c8b:
+					if (id.equals("do")) type = Token.DO;
+					break;
+				case 0x002f8d39:
+					if (id.equals("else")) type = Token.ELSE;
+					break;
+				case 0x05cb1923:
+					if (id.equals("false")) type = Token.FALSE;
+					break;
+				case 0x00018cc9:
+					if (id.equals("for")) type = Token.FOR;
+					break;
+				case 0x00000d1d:
+					if (id.equals("if")) type = Token.IF;
+					break;
+				case 0x00000d25:
+					if (id.equals("in")) {
+						if (env.hasOption(CompilerEnv.F_COMPAT21)) {
+							env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'in' will be a keyword in Ether 2.2");
+						} else {
+							type = Token.IN;
+						}
+					}
+					break;
+				case 0x0001a9a0:
+					if (id.equals("new")) type = Token.NEW;
+					break;
+				case 0x0033c587:
+					if (id.equals("null")) type = Token.NULL;
+					break;
+				case 0xc84e3d30:
+					if (id.equals("return")) {
+						if (env.hasOption(CompilerEnv.F_COMPAT21)) {
+							env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'return' will be a keyword in Ether 2.2");
+						} else {
+							type = Token.RETURN;
+						}
+					}
+					break;
+				case 0x68b6f7b:
+					if (id.equals("super")) type = Token.SUPER;
+					break;
+				case 0xcafbb734:
+					if (id.equals("switch")) type = Token.SWITCH;
+					break;
+				case 0x0693a6e6:
+					if (id.equals("throw")) {
+						if (env.hasOption(CompilerEnv.F_COMPAT21)) {
+							env.warn(filename, linenumber, CompilerEnv.W_DEPRECATED, "'throw' will be a keyword in Ether 2.2");
+						} else {
+							type = Token.THROW;
+						}
+					}
+					break;
+				case 0x0036758e:
+					if (id.equals("true")) type = Token.TRUE;
+					break;
+				case 0x0001c1bb:
+					if (id.equals("try")) type = Token.TRY;
+					break;
+				case 0x00368f3a:
+					if (id.equals("type")) type = Token.TYPE;
+					break;
+				case 0x0001c587:
+					if (id.equals("use")) type = Token.USE;
+					break;
+				case 0x0001c727:
+					if (id.equals("var")) type = Token.VAR;
+					break;
+				case 0x06bdcb31:
+					if (id.equals("while")) type = Token.WHILE;
+					break;
+			}
+			return ttype = type;
 		}
 
 		//operators and comments

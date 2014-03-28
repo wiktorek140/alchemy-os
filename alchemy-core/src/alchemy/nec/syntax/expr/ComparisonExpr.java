@@ -23,7 +23,7 @@ import alchemy.nec.syntax.type.Type;
 
 /**
  * Comparison expression.
- * <pre><i>expr</i> &lt; <i>expr</i></pre>
+ * <pre>lhs &lt; rhs</pre>
  * Valid operators are &lt;, &gt;, &lt=, &gt;=, ==, !=.
  * 
  * @author Sergey Basalaev

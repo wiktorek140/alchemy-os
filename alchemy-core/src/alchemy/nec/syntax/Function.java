@@ -31,11 +31,13 @@ public class Function implements Scope {
 	/** Name of the source file for this function. */
 	public String source;
 	/** Signature of this function. */
-	public String signature;
+	public final String signature;
 	/** Type of this function. */
 	public FunctionType type;
 	/** Whether this function is a .new method. */
 	public boolean isConstructor;
+	/** Whether this function is public. */
+	public boolean isPublic;
 	/** Function arguments. */
 	public Var[] args;
 	/** Usage count of a function. */
@@ -47,6 +49,7 @@ public class Function implements Scope {
 
 	public Function(Scope scope, String name) {
 		this.parent = scope;
+		this.signature = name;
 	}
 
 	public Type getType(String name) {
@@ -58,5 +61,9 @@ public class Function implements Scope {
 			if (args[i].name.equals(name)) return args[i];
 		}
 		return parent.getVar(name);
+	}
+
+	public Function enclosingFunction() {
+		return this;
 	}
 }

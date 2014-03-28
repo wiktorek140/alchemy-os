@@ -18,10 +18,12 @@
 
 package alchemy.nec.syntax.statement;
 
+import alchemy.nec.syntax.Function;
 import alchemy.nec.syntax.Scope;
 import alchemy.nec.syntax.Var;
 import alchemy.nec.syntax.type.Type;
 import alchemy.util.ArrayList;
+import alchemy.util.HashMap;
 
 /**
  * Block statement.
@@ -39,7 +41,8 @@ public final class BlockStatement extends Statement implements Scope {
 
 	private final Scope parent;
 
-	public ArrayList statements;
+	public final HashMap vars = new HashMap();
+	public final ArrayList statements = new ArrayList();
 
 	public BlockStatement(Scope scope) {
 		super(STAT_BLOCK);
@@ -56,7 +59,17 @@ public final class BlockStatement extends Statement implements Scope {
 	}
 
 	public Var getVar(String name) {
-		return parent.getVar(name);
+		Var var = (Var) vars.get(name);
+		return (var != null) ? var : parent.getVar(name);
+	}
+
+	public boolean addVar(Var var) {
+		vars.set(var.name, var);
+		return parent.getVar(var.name) != null;
+	}
+
+	public Function enclosingFunction() {
+		return parent.enclosingFunction();
 	}
 
 	public Object accept(StatementVisitor v, Object args) {

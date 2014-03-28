@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -166,6 +166,27 @@ public interface Opcodes {
 	byte CALV_6      = (byte)0x7E;
 	byte CALV_7      = (byte)0x7F;
 
+	byte CALLC_0     = (byte)0xB0;
+	byte CALLC_1     = (byte)0xB1;
+	byte CALLC_2     = (byte)0xB2;
+	byte CALLC_3     = (byte)0xB3;
+	byte CALLC_4     = (byte)0xB4;
+	byte CALLC_5     = (byte)0xB5;
+	byte CALLC_6     = (byte)0xB6;
+	byte CALLC_7     = (byte)0xB7;
+	byte CALVC_0     = (byte)0xB8;
+	byte CALVC_1     = (byte)0xB9;
+	byte CALVC_2     = (byte)0xBA;
+	byte CALVC_3     = (byte)0xBB;
+	byte CALVC_4     = (byte)0xBC;
+	byte CALVC_5     = (byte)0xBD;
+	byte CALVC_6     = (byte)0xBE;
+	byte CALVC_7     = (byte)0xBF;
+	byte CALLC       = (byte)0xC0;
+	byte CALVC       = (byte)0xC1;
+
+	byte CONCAT      = (byte)0xCD;
+	byte NEWMULTIARRAY = (byte)0xCE;
 	byte SETGLOBAL   = (byte)0xCF;
 	byte GETGLOBAL   = (byte)0xD0;
 	byte GETGLOBALDEF= (byte)0xD1;

@@ -119,6 +119,7 @@ public final class Token {
 	public static final int BREAK = -70;
 	public static final int CONTINUE = -71;
 	public static final int RETURN = -72;
+	public static final int THROW = -73;
 
 	public static boolean isAssignment(int token) {
 		return (token >= -41 && token <= -30) || (token == '=');
@@ -128,8 +129,8 @@ public final class Token {
 		return (token == IN) || (token >= -28 && token <= -19) || "+-/*%^&|<>".indexOf(token) >= 0;
 	}
 
-	public static int getAssignOperator(int token) {
-		switch (token) {
+	public static int getBinaryOperator(int assignment) {
+		switch (assignment) {
 			case PLUSEQ: return '+';
 			case MINUSEQ: return '-';
 			case STAREQ: return '*';
@@ -142,7 +143,7 @@ public final class Token {
 			case GTGTEQ: return GTGT;
 			case GTGTGTEQ: return GTGTGT;
 			default:
-				throw new IllegalArgumentException("Not an assignment operator: " + token);
+				throw new IllegalArgumentException("Not an assignment operator: " + Token.toString(assignment));
 		}
 	}
 

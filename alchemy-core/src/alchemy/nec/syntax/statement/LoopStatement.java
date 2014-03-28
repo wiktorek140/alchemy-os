@@ -21,7 +21,7 @@ package alchemy.nec.syntax.statement;
 import alchemy.nec.syntax.expr.Expr;
 
 /**
- * Unified loop statement.
+ * Unified statement for do/while loops.
  *
  * <pre>
  * <b>while</b> (<i>condition</i>) <i>postBody</i>

@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
 package alchemy.nec;
 
 import alchemy.nec.syntax.Function;
-import alchemy.nec.syntax.Unit;
 import alchemy.nec.syntax.expr.ConstExpr;
 import alchemy.nec.syntax.expr.Expr;
 import alchemy.nec.syntax.statement.*;
-import alchemy.nec.syntax.type.BuiltinType;
 
 /**
- * Checks control flow.
+ * Returns flow status of the statement.
+ * Prints errors if statement defines erroneous flow.
+ * Argument is Boolean value.
  * @author Sergey Basalaev
  */
 public final class FlowAnalyzer implements StatementVisitor {
@@ -35,132 +35,145 @@ public final class FlowAnalyzer implements StatementVisitor {
 
 	/** Indicates that execution continues after this statement. */
 	public final Object NEXT = new Object();
-	/** Indicates that function returns after this statement. */
+	/** Indicates that function returns normally after this statement. */
 	public final Object RETURN = new Object();
 	/** Indicates that control breaks outside innermost loop after this statement. */
 	public final Object BREAK = new Object();
+	/** Indicates that error is thrown in this statement. */
+	public final Object THROW = new Object();
 
 	private final CompilerEnv env;
 
 	private Function function;
-	private int loopcount;
 
 	public FlowAnalyzer(CompilerEnv env) {
 		this.env = env;
 	}
 
-	public void visitUnit(Unit u) {
-		
+	public Object visitFunction(Function f) {
+		this.function = f;
+		Object status = f.body.accept(this, Boolean.FALSE);
+		this.function = null;
+		return status;
 	}
 
-	public void visitFunction(Function f) {
-		if (f.body == null) return;
-		this.function = f;
-		this.loopcount = 0;
-		Object result = f.body.accept(this, null);
-		if (result != RETURN) {
-			if (f.type.rettype == BuiltinType.NONE) {
-				BlockStatement block = new BlockStatement(f);
-				block.statements.add(f.body);
-				block.statements.add(new ReturnStatement(null));
-				f.body = block;
-				return;
-			}
-			if (env.hasOption(CompilerEnv.F_COMPAT21) && f.body.kind == Statement.STAT_BLOCK) {
-				BlockStatement block = (BlockStatement) f.body;
-				if (block.statements.size() > 0) {
-					Statement last = (Statement) block.statements.last();
-					if (last.kind == Statement.STAT_EXPR) {
-						Expr expr = ((ExprStatement)last).expr;
-						if (expr.returnType().safeToCastTo(f.type.rettype)) {
-							env.warn(f.source, expr.lineNumber(), CompilerEnv.W_DEPRECATED,
-									"In Ether 2.2 'return' keyword should be used to return function result");
-							block.statements.set(block.statements.size()-1, new ReturnStatement(expr));
-							return;
-						}
-					}
-				}
-			}
-			env.warn(f.source, f.body.lineNumber(), CompilerEnv.W_ERROR, "Missing return statement");
+	private Object common(Object flow1, Object flow2) {
+		if (flow1 == NEXT || flow2 == NEXT) {
+			return NEXT;
+		} else if (flow1 == BREAK || flow2 == BREAK) {
+			return BREAK;
+		} else if (flow1 == THROW || flow2 == THROW) {
+			return THROW;
+		} else {
+			return RETURN;
 		}
 	}
 
-	public Object visitAssignStatement(AssignStatement assign, Object args) {
+	public Object visitArraySetStatement(ArraySetStatement stat, Object inLoop) {
 		return NEXT;
 	}
 
-	public Object visitBlockStatement(BlockStatement block, Object args) {
+	public Object visitAssignStatement(AssignStatement assign, Object inLoop) {
+		return NEXT;
+	}
+
+	public Object visitBlockStatement(BlockStatement block, Object inLoop) {
 		Object result = NEXT;
 		for (int i=0; i<block.statements.size(); i++) {
 			Statement stat = (Statement) block.statements.get(i);
-			if (result != NEXT) {
+			if (result != NEXT && function != null) {
 				env.warn(function.source, stat.lineNumber(), CompilerEnv.W_ERROR, "Unreachable statement");
 				return result;
 			}
-			result = stat.accept(this, args);
+			result = stat.accept(this, inLoop);
 		}
 		return result;
 	}
 
-	public Object visitBreakStatement(BreakStatement brk, Object args) {
-		if (loopcount == 0) {
+	public Object visitBreakStatement(BreakStatement brk, Object inLoop) {
+		if (inLoop != Boolean.TRUE && function != null) {
 			env.warn(function.source, brk.lineNumber(), CompilerEnv.W_ERROR, "'break' outside of loop");
 		}
 		return BREAK;
 	}
 
-	public Object visitCompoundAssignStatement(CompoundAssignStatement stat, Object args) {
+	public Object visitCompoundAssignStatement(CompoundAssignStatement stat, Object inLoop) {
 		return NEXT;
 	}
 
-	public Object visitContinueStatement(ContinueStatement cnt, Object args) {
-		if (loopcount == 0) {
+	public Object visitContinueStatement(ContinueStatement cnt, Object inLoop) {
+		if (inLoop != Boolean.TRUE && function != null) {
 			env.warn(function.source, cnt.lineNumber(), CompilerEnv.W_ERROR, "'continue' outside of loop");
 		}
 		return BREAK;
 	}
 
-	public Object visitEmptyStatement(EmptyStatement stat, Object args) {
+	public Object visitEmptyStatement(EmptyStatement stat, Object inLoop) {
 		return NEXT;
 	}
 
-	public Object visitExprStatement(ExprStatement stat, Object args) {
+	public Object visitExprStatement(ExprStatement stat, Object inLoop) {
 		return NEXT;
 	}
 
-	public Object visitIfStatement(IfStatement stat, Object args) {
-		Object ifResult = stat.ifstat.accept(this, args);
-		Object elseResult = stat.elsestat.accept(this, args);
-		if (ifResult == NEXT || elseResult == NEXT) {
-			return NEXT;
-		} else if (ifResult == BREAK || elseResult == BREAK) {
-			return BREAK;
-		} else {
+	public Object visitForLoopStatement(ForLoopStatement stat, Object inLoop) {
+		Object incrResult = stat.increment.accept(this, Boolean.TRUE);
+		Object bodyResult = stat.body.accept(this, Boolean.TRUE);
+		if (incrResult == RETURN && bodyResult == RETURN) {
 			return RETURN;
+		} else if (incrResult == THROW && bodyResult == THROW) {
+			return THROW;
+		} else {
+			return NEXT;
 		}
 	}
 
-	public Object visitLoopStatement(LoopStatement stat, Object args) {
-		loopcount++;
-		Object preResult = stat.preBody.accept(this, args);
-		Object postResult = stat.postBody.accept(this, args);
-		loopcount--;
+	public Object visitIfStatement(IfStatement stat, Object inLoop) {
+		Object ifResult = stat.ifstat.accept(this, inLoop);
+		Object elseResult = stat.elsestat.accept(this, inLoop);
+		return common(ifResult, elseResult);
+	}
+
+	public Object visitLoopStatement(LoopStatement stat, Object inLoop) {
+		Object preResult = stat.preBody.accept(this, Boolean.TRUE);
+		Object postResult = stat.postBody.accept(this, Boolean.TRUE);
 		if (preResult == RETURN && postResult == RETURN) {
 			return RETURN;
-		} else if (stat.condition.kind == Expr.EXPR_CONST
-		           && ((ConstExpr)stat.condition).value == Boolean.TRUE
-		           && preResult != BREAK && postResult != BREAK) {
-			return RETURN;
+		} else if (preResult == THROW && postResult == THROW) {
+			return THROW;
 		} else {
 			return NEXT;
 		}
 	}
 
-	public Object visitReturnStatement(ReturnStatement stat, Object args) {
+	public Object visitReturnStatement(ReturnStatement stat, Object inLoop) {
 		return RETURN;
 	}
 
-	public Object visitThrowStatement(ThrowStatement stat, Object args) {
-		return RETURN;
+	public Object visitSwitchStatement(SwitchStatement stat, Object inLoop) {
+		Object result = stat.elseStat.accept(this, inLoop);
+		for (int i=0; i<stat.statements.length; i++) {
+			result = common(result, stat.statements[i].accept(this, inLoop));
+		}
+		return result;
+	}
+
+	public Object visitThrowStatement(ThrowStatement stat, Object inLoop) {
+		return THROW;
+	}
+
+	public Object visitTryCatchStatement(TryCatchStatement stat, Object inLoop) {
+		Object tryResult = stat.tryStat.accept(this, inLoop);
+		Object catchResult = stat.catchStat.accept(this, inLoop);
+		if (tryResult == THROW) {
+			return catchResult;
+		}
+		if (tryResult == NEXT || catchResult == NEXT) {
+			return NEXT;
+		} else if (tryResult == BREAK || catchResult == BREAK) {
+			return BREAK;
+		} else {
+			return catchResult;
+		}
 	}
 }

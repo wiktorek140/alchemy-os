@@ -23,25 +23,25 @@ import alchemy.nec.syntax.expr.Expr;
 
 /**
  * Compound assignment to a variable.
- * <pre><i>varname</i> += <i>expr</i></pre>
+ * <pre><i>var</i> += <i>assignExpr</i></pre>
  *
  * @author Sergey Basalaev
  */
 public final class CompoundAssignStatement extends Statement {
 
-	public final Var var;
-	public final int operator;
-	public Expr expr;
+	public Var var;
+	public final int assignOperator;
+	public Expr assignExpr;
 
-	public CompoundAssignStatement(Var var, int operator, Expr expr) {
+	public CompoundAssignStatement(Var var, int assignOperator, Expr assignExpr) {
 		super(STAT_COMPOUND_ASSIGN);
 		this.var = var;
-		this.operator = operator;
-		this.expr = expr;
+		this.assignOperator = assignOperator;
+		this.assignExpr = assignExpr;
 	}
 
 	public int lineNumber() {
-		return expr.lineNumber();
+		return assignExpr.lineNumber();
 	}
 
 	public Object accept(StatementVisitor v, Object args) {

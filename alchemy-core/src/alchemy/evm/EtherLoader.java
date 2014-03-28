@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,7 +74,9 @@ public final class EtherLoader {
 	 *  Variable instructions: iinc
 	 *
 	 * New in format 2.2
-	 *  Instructions: throw getglobal setglobal
+	 *  Call instructions: callc callc_n calvc calvc_n
+	 *  Global var access: getglobal getglobaldef setglobal
+	 *  Other instructions: throw newmultiarray concat
 	 */
 
 	/** Loads Ether library from given input stream. */
@@ -83,7 +85,7 @@ public final class EtherLoader {
 		Library lib;
 		//reading format version
 		int ver = data.readUnsignedShort();
-		if ((ver|0xff) != (VERSION|0xff)  ||  (ver&0xff) > (VERSION&0xff))
+		if ((ver | 0xff) != (VERSION | 0xff)  ||  (ver & 0xff) > (VERSION & 0xff))
 			throw new InstantiationException("Incompatible executable format: "+ver);
 		//reading object type
 		int lflags = data.readUnsignedByte();
