@@ -1,6 +1,6 @@
 /*
  * This file is a part of Alchemy OS project.
- *  Copyright (C) 2011-2013, Sergey Basalaev <sbasalaev@gmail.com>
+ *  Copyright (C) 2011-2014, Sergey Basalaev <sbasalaev@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,12 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package alchemy.midlet;
+package alchemy.platform.j2me;
 
-import alchemy.io.UTFReader;
-import alchemy.util.Properties;
-import alchemy.util.Strings;
+import alchemy.io.IO;
+import alchemy.platform.Installer;
+import alchemy.util.HashMap;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreNotFoundException;
 
@@ -42,86 +44,68 @@ import javax.microedition.rms.RecordStoreNotFoundException;
  * <dd>Version of installation</dd>
  * </dl>
  * @author Sergey Basalaev
- * @deprecated alchemy.platform.Installer should be used instead
  */
-public class InstallInfo {
+public final class InstallCfg implements alchemy.platform.InstallCfg {
 
 	private static final String INSTALLINFO = "installinfo";
 
-	private static Properties props;
+	private HashMap config;
+	private boolean isInstalled;
 
-	private InstallInfo() { }
-
-	/** Key for the installed version number. */
-	public static final String SYS_VERSION = "alchemy.version";
-	/** Key for the type of the root file system. */
-	public static final String FS_INIT = "fs.init";
-	/** Key for the string used to initialize root file system. */
-	public static final String FS_TYPE = "fs.type";
-	/** Key for the current name of the record store used as emulated FS. */
-	public static final String RMS_NAME = "rms.name";
-	
-	/**
-	 * Tests whether installation info exists within MIDlet.
-	 */
-	public static boolean exists() {
-		try {
-			RecordStore.openRecordStore(INSTALLINFO, false).closeRecordStore();
-			return true;
-		} catch (RecordStoreNotFoundException rsnfe) {
-			return false;
-		} catch (Exception e) {
-			throw new RuntimeException(e.toString());
-		}
-	}
-
-	/**
-	 * Reads installation information.
-	 * Returns empty properties if Alchemy is not installed.
-	 * Returned object should then be filled with new information.
-	 */
-	public static Properties read() {
-		if (props != null) return props;
+	public InstallCfg() throws IOException {
 		try {
 			RecordStore rs = RecordStore.openRecordStore(INSTALLINFO, false);
 			try {
-				byte[] b = rs.getRecord(1);
-				UTFReader r = new UTFReader(new ByteArrayInputStream(b));
-				return props = Properties.readFrom(r);
+				config = Installer.parseConfig(new ByteArrayInputStream(rs.getRecord(1)));
+				// for compatibility with Release 2.1
+				if (config.get("alchemy.version") != null) {
+					config.set(Installer.VERSION, config.get("alchemy.version"));
+					config.remove("alchemy.version");
+				}
 			} finally {
 				rs.closeRecordStore();
 			}
+			isInstalled = true;
 		} catch (RecordStoreNotFoundException rsnfe) {
-			return props = new Properties();
+			// ok, not installed
+			config = new HashMap();
+			isInstalled = false;
 		} catch (Exception e) {
-			throw new RuntimeException(e.toString());
+			throw new IOException(e.toString());
 		}
 	}
 
-	/**
-	 * Saves installation information that was changed
-	 * after the previous call to <code>read()</code>.
-	 */
-	public static void save() {
-		if (props == null) return;
+	public boolean exists() {
+		return isInstalled;
+	}
+
+	public HashMap getConfig() {
+		return config;
+	}
+
+	public void save() throws IOException {
 		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			Object[] keys = config.keys();
+			for (int i=0; i<keys.length; i++) {
+				IO.println(out, "" + keys[i] + '=' + config.get(keys[i]));
+			}
 			RecordStore rs = RecordStore.openRecordStore(INSTALLINFO, true);
 			if (rs.getNextRecordID() == 1) rs.addRecord(null, 0, 0);
-			byte[] data = Strings.utfEncode(props.toString());
+			byte[] data = out.toByteArray();
 			rs.setRecord(1, data, 0, data.length);
 			rs.closeRecordStore();
+			isInstalled = true;
 		} catch (Exception e) {
 			throw new RuntimeException(e.toString());
 		}
 	}
 
-	/**
-	 * Removes installation info and invalidates any produced properties.
-	 */
-	public static void remove() {
+	public void remove() {
 		try {
-			props = null;
+			config.clear();
 			RecordStore.deleteRecordStore(INSTALLINFO);
+			isInstalled = false;
 		} catch (RecordStoreNotFoundException rsnfe) {
 			// already removed
 		} catch (Exception e) {

@@ -1,24 +1,23 @@
 /*
- * This file is a part of Alchemy OS project.
- *  Copyright (C) 2014, Sergey Basalaev <sbasalaev@gmail.com>
+ * Copyright (C) 2014 Sergey Basalaev
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package alchemy.apps;
 
 import alchemy.io.TerminalInput;
+import alchemy.libs.ui.UiScreen;
 import alchemy.util.Strings;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -33,21 +32,23 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JFrame;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import static javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED;
-import static javax.swing.JScrollPane.VERTICAL_SCROLLBAR_ALWAYS;
+import static javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 /**
- * Terminal window.
+ * Terminal screen.
  * @author Sergey Basalaev
  */
-public final class TerminalFrame extends JFrame {
+public class TerminalScreen extends UiScreen {
 
+	private final JPanel widget;
 	private final JTextArea output;
 	private final JLabel prompt;
 	private final JTextField input;
@@ -59,13 +60,16 @@ public final class TerminalFrame extends JFrame {
 	final TerminalOutputStream out = new TerminalOutputStream();
 	final TerminalOutputStream err = out;
 
-	public TerminalFrame(String title) {
+	private boolean withEOF = false;
+
+	public TerminalScreen(String title) {
 		super(title);
+		widget = new JPanel(new BorderLayout());
 
 		output = new JTextArea();
 		output.setEditable(false);
 		output.setLineWrap(true);
-		JScrollPane outputPane = new JScrollPane(output, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JScrollPane outputPane = new JScrollPane(output, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		outputPane.setPreferredSize(new Dimension(640, 480));
 
 		prompt = new JLabel();
@@ -93,9 +97,8 @@ public final class TerminalFrame extends JFrame {
 		inputBox.add(input);
 		inputBox.add(enter);
 
-		add(outputPane, BorderLayout.CENTER);
-		add(inputBox, BorderLayout.SOUTH);
-		pack();
+		widget.add(outputPane, BorderLayout.CENTER);
+		widget.add(inputBox, BorderLayout.SOUTH);
 	}
 
 	private String waitForInput() {
@@ -122,16 +125,12 @@ public final class TerminalFrame extends JFrame {
 		return newInput;
 	}
 
-	void end(String name) {
-		input.setEditable(false);
-		input.setText("Process '" + name + "' ended.");
-		enter.setText("Close");
-		enter.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				TerminalFrame.this.setVisible(false);
-			}
-		});
-		enter.setVisible(true);
+	@Override public JComponent getWidget() {
+		return widget;
+	}
+
+	public void sendEOF() {
+		withEOF = true;
 	}
 
 	private class TerminalInputStream extends InputStream implements TerminalInput {
@@ -149,6 +148,10 @@ public final class TerminalFrame extends JFrame {
 		public int read() throws IOException {
 			int b = buf.read();
 			if (b == -1) {
+				if (withEOF) {
+					withEOF = false;
+					return -1;
+				}
 				String data = waitForInput();
 				buf = new ByteArrayInputStream(Strings.utfEncode(data));
 				b = buf.read();
@@ -172,6 +175,19 @@ public final class TerminalFrame extends JFrame {
 		public void setPrompt(String text) {
 			prompt.setText(text);
 		}
+	}
+
+	void end(String name) throws InterruptedException {
+		input.setEditable(false);
+		input.setText("Process '" + name + "' ended.");
+		enter.setText("Close");
+		enter.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				synchronized (sync) { sync.notify(); }
+			}
+		});
+		enter.setVisible(true);
+		synchronized (sync) { sync.wait(); }
 	}
 
 	private class TerminalOutputStream extends OutputStream {
